@@ -51,6 +51,44 @@ the fields which are set by `simple_opt_parse` are:
 fields contain the value passed (with the correct field to set being determined
 by the `type` field shown above).
 
+options of the following types:
+
+```
+	SIMPLE_OPT_BOOL,
+	SIMPLE_OPT_INT,
+	SIMPLE_OPT_UNSIGNED,
+	SIMPLE_OPT_STRING,
+```
+
+take arguments. if the user passes a short option on the cli, that options
+argument is passed as the following cli argument, like so:
+
+```
+./a.out -x <arg_goes_here>
+```
+
+if the user passes a long option on the cli, that option's argument can be
+passed either as the following cli argument or following an `=` typed at the
+end of the argument, like so:
+
+```
+./a.out --opt-x <arg_goes_here>
+./a.out --opt-x=<arg_goes_here>
+```
+
+arguments acceptable to type `SIMPLE_OPT_BOOL` are `true`, `yes`, or `on`, all
+of which result in a value of true, and `false`, `no`, or `off`, which result
+in a value of false.
+
+arguments acceptable to type `SIMPLE_OPT_INT` must be decimal integers (that is
+digit-only strings) with an optional leading sign indicator of `-` or `+`.
+
+arguments acceptable to type `SIMPLE_OPT_UNSIGNED` must be decimal integers
+(that is digit-only strings).
+
+arguments acceptable to type `SIMPLE_OPT_STRING` may be any string of
+characters the user passes.
+
 
 ### struct simple_opt_result
 
