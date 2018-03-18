@@ -178,7 +178,7 @@ command behaves. if this is left as `NULL`, no summary will be printed.
 the final argument, `struct simple_opt *options`, is an array of options as
 defined above.
 
-*note:* usage printing's word wrap operates on the assumptions that your
+*note:* usage printing's word wrap operates under the assumptions that your
 language delimits words with spaces (i.e. "when i was a child..." vs.
 "子供時代に..."), that the font used is fixed-width, and that every character
 occupies one column (that is, there are no ｗｉｄｅ characters, combining
