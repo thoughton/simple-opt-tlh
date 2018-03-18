@@ -19,9 +19,9 @@ int main(int argc, char **argv)
 		{ SIMPLE_OPT_END },
 	};
 
-	/* contains an enum for identifying simple_opt_parse's return value as well
-	 * as the argv index of the first non-option and information relevant for
-	 * error handling */
+	/* contains an enum for identifying simple_opt_parse's return value, an
+	 * array of the cli arguments which were not parsed as options, and
+	 * information relevant for error handling */
 	struct simple_opt_result result;
 
 	int i;

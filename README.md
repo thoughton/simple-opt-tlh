@@ -4,8 +4,8 @@ simple-opt
 simple-opt.h is a single header file which implements a simple, flexible and
 portable version of command line option parsing for programs written in C. it
 is designed to be (hopefully) intuitive while also being (hopefully) more
-powerful than traditional getopt or similar, while having no dependencies
-outside the standard library and remaining C99 compatible.
+powerful than traditional getopt or similar. it has no dependencies outside the
+standard library and is C99 compatible.
 
 what follows is a simple example usage. refer to
 [interface.md](doc/interface.md) for more detail.
@@ -14,7 +14,8 @@ what follows is a simple example usage. refer to
 example
 -------
 
-the following example file is available as [example.c](doc/example.c)
+the following example file is available as [example.c](doc/example.c), which
+you can compile and test with yourself.
 
 ```C
 #include "../src/simple-opt.h"
@@ -38,9 +39,9 @@ int main(int argc, char **argv)
 		{ SIMPLE_OPT_END },
 	};
 
-	/* contains an enum for identifying simple_opt_parse's return value as well
-	 * as the argv index of the first non-option and information relevant for
-	 * error handling */
+	/* contains an enum for identifying simple_opt_parse's return value, an
+	 * array of the cli arguments which were not parsed as options, and
+	 * information relevant for error handling */
 	struct simple_opt_result result;
 
 	int i;
