@@ -80,10 +80,10 @@ struct simple_opt_result {
 	char *argv[SIMPLE_OPT_MAX_ARGC];
 };
 
-struct simple_opt_result simple_opt_parse(int argc, char **argv, struct
-		simple_opt *options);
+static struct simple_opt_result simple_opt_parse(int argc, char **argv,
+		struct simple_opt *options);
 
-void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
+static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		char *usage_options, char *usage_summary, struct simple_opt *options);
 
 
@@ -92,7 +92,7 @@ void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
  *
  */
 
-bool sub_simple_opt_parse(struct simple_opt *o, char *s)
+static bool sub_simple_opt_parse(struct simple_opt *o, char *s)
 {
 	int i, j;
 	char *str;
@@ -191,7 +191,7 @@ strmatch_out:
 	}
 }
 
-int sub_simple_opt_id(char *s, struct simple_opt *o)
+static int sub_simple_opt_id(char *s, struct simple_opt *o)
 {
 	int i;
 	char c;
@@ -222,8 +222,8 @@ int sub_simple_opt_id(char *s, struct simple_opt *o)
 	return -1;
 }
 
-struct simple_opt_result simple_opt_parse(int argc, char **argv, struct
-		simple_opt *options)
+static struct simple_opt_result simple_opt_parse(int argc, char **argv,
+		struct simple_opt *options)
 {
 	int i, j, opt_i;
 	int arg_end;
@@ -382,8 +382,8 @@ opt_copy_and_return:
 	goto end;
 }
 
-int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col, int line_start,
-		const char *s)
+static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
+		int line_start, const char *s)
 {
 	bool add_newline = false, first_word = true;
 	int i, j, word_start, word_end;
@@ -474,7 +474,7 @@ int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col, int line_start,
 	return col;
 }
 
-void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
+static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		char *usage_options, char *usage_summary, struct simple_opt *options)
 {
 	char print_buffer[SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH];

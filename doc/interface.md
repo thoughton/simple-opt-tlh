@@ -163,8 +163,8 @@ single header file nature)
 simple_opt_result`:
 
 ```
-struct simple_opt_result simple_opt_parse(int argc, char **argv, struct
-		simple_opt *options);
+static struct simple_opt_result simple_opt_parse(int argc, char **argv,
+		struct simple_opt *options);
 ```
 
 `argc` is the number of arguments contained in `argv`, and `argv` is an array
@@ -182,8 +182,8 @@ about that parsing (also described above).
 usage message, similar to those typical of GNU cli commands:
 
 ```
-void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
-		char *usage_options, char *usage_summary, struct simple_opt *options)
+static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
+		char *usage_options, char *usage_summary, struct simple_opt *options);
 ```
 
 `f` is a file pointer to which the message should be printed
