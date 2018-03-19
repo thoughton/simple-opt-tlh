@@ -2,20 +2,32 @@
 
 int main(int argc, char **argv)
 {
+	const char *set[] = { "choice_a", "choice_b", NULL };
+
 	/* array containing all options and their types / attributes */
 	struct simple_opt options[] = {
 		{ SIMPLE_OPT_FLAG, 'h', "help", false,
 			"print this help message and exit" },
+		{ SIMPLE_OPT_BOOL, 'b', "bool", false,
+			"(optionally) takes a boolean arg!" },
 		{ SIMPLE_OPT_INT, '\0', "int", true,
-			"this thing needs an integer!" },
+			"requires an integer. has no short_name!" },
 		{ SIMPLE_OPT_UNSIGNED, 'u', "uns", true,
 			"this one has a custom_arg_string. normally it would say" 
 				" \"UNSIGNED\" rather than \"NON-NEG-INT\"",
 			"NON-NEG-INT" },
+		{ SIMPLE_OPT_DOUBLE, 'd', "double", true,
+			"a floating point number" },
 		{ SIMPLE_OPT_STRING, 's', NULL, true,
-			"this one doesn't have a long opt version" },
-		{ SIMPLE_OPT_BOOL, 'b', "bool", false,
-			"(optionally) takes a boolean arg!" },
+			"this one doesn't have a long_name version" },
+		{ SIMPLE_OPT_STRING_SET, '\0', "set-choice", true,
+			"a choice of one string from a NULL-terminated array."
+				" note that, in order to maintain redability, the description"
+				" indentation does not accomodate the full width of an"
+				" overly-wide custom_arg_string like (choice_a|choice_b)",
+			"(choice_a|choice_b)", set },
+		{ SIMPLE_OPT_CHAR, 'c', "char", false,
+			"(optionally) takes a character argument" },
 		{ SIMPLE_OPT_END },
 	};
 
@@ -82,22 +94,34 @@ int main(int argc, char **argv)
 
 		if (options[i].arg_is_stored) {
 			switch (options[i].type) {
+			case SIMPLE_OPT_BOOL:
+				printf(", val: %s", options[i].val_bool ? "true" : "false");
+				break;
+				
 			case SIMPLE_OPT_INT:
-				printf(", val: %d", options[i].val_int);
+				printf(", val: %ld", options[i].val_int);
 				break;
 
 			case SIMPLE_OPT_UNSIGNED:
-				printf(", val: %u", options[i].val_unsigned);
+				printf(", val: %lu", options[i].val_unsigned);
+				break;
+
+			case SIMPLE_OPT_DOUBLE:
+				printf(", val: %lf", options[i].val_double);
+				break;
+
+			case SIMPLE_OPT_CHAR:
+				printf(", val: %c", options[i].val_char);
 				break;
 
 			case SIMPLE_OPT_STRING:
 				printf(", val: %s", options[i].val_string);
 				break;
 
-			case SIMPLE_OPT_BOOL:
-				printf(", val: %s", options[i].val_bool ? "true" : "false");
+			case SIMPLE_OPT_STRING_SET:
+				printf(", val: %s", set[options[i].val_string_set_idx]);
 				break;
-				
+
 			default:
 				break;
 			}

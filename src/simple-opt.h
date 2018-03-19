@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 
 /* the maximum number of options that can be passed on the cli */
 #ifndef SIMPLE_OPT_MAX_ARGC
@@ -33,7 +34,10 @@ enum simple_opt_type {
 	SIMPLE_OPT_BOOL,
 	SIMPLE_OPT_INT,
 	SIMPLE_OPT_UNSIGNED,
+	SIMPLE_OPT_DOUBLE,
+	SIMPLE_OPT_CHAR,
 	SIMPLE_OPT_STRING,
+	SIMPLE_OPT_STRING_SET,
 	SIMPLE_OPT_END,
 };
 
@@ -43,11 +47,15 @@ struct simple_opt {
 	const char *long_name;
 	bool arg_is_required;
 
-	/* optional, used for usage printing */
+	/* optional, a description of the option used for usage printing */
 	const char *description;
 
 	/* optional, a custom string describing the arg, used for usage printing */
 	const char *custom_arg_string;
+
+	/* for type SIMPLE_OPT_STRING_SET, a NULL-terminated array of string
+	 * possibilities against which an option's argument is matched */
+	const char **string_set;
 
 	/* values assigned upon successful option parse */
 	bool was_seen;
@@ -55,9 +63,12 @@ struct simple_opt {
 
 	union {
 		bool val_bool;
-		int val_int;
-		unsigned val_unsigned;
+		long val_int;
+		unsigned long val_unsigned;
+		double val_double;
+		char val_char;
 		char val_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
+		int val_string_set_idx;
 	};
 };
 
@@ -95,7 +106,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 static bool sub_simple_opt_parse(struct simple_opt *o, char *s)
 {
 	int i, j;
-	char *str;
+	char *str, *cp;
 	bool match;
 
 	switch (o->type) {
@@ -148,35 +159,40 @@ strmatch_out:
 
 
 	case SIMPLE_OPT_INT:
+		errno = 0;
+		o->val_int = strtol(s, &cp, 0);
 
-		if (s[0] == '-' || s[0] == '+') {
-			if (strlen(s) < 2)
-				return false;
-			j = 1;
-		} else {
-			j = 0;
-		}
-
-		for (i = j; s[i] != '\0'; i++) {
-			if ( !isdigit(s[i]) )
-				return false;
-		}
-
-		if (s[0] == '-')
-			o->val_int = -atoi(s+j);
-		else
-			o->val_int = atoi(s+j);
+		if (cp == s || *cp != '\0' || errno)
+			return false;
 
 		return true;
 
 	case SIMPLE_OPT_UNSIGNED:
+		if (s[0] == '-' || s[0] == '+')
+			return false;
 
-		for (i = 0; s[i] != '\0'; i++) {
-			if ( !isdigit(s[i]) )
-				return false;
-		}
+		errno = 0;
+		o->val_unsigned = strtoul(s, &cp, 0);
 
-		o->val_int = atoi(s);
+		if (cp == s || *cp != '\0' || errno)
+			return false;
+
+		return true;
+
+	case SIMPLE_OPT_DOUBLE:
+		errno = 0;
+		o->val_double = strtod(s, &cp);
+
+		if (cp == s || *cp != '\0' || errno)
+			return false;
+
+		return true;
+
+	case SIMPLE_OPT_CHAR:
+		if (strlen(s) != 1)
+			return false;
+
+		o->val_char = s[0];
 		return true;
 
 	case SIMPLE_OPT_STRING:
@@ -185,6 +201,16 @@ strmatch_out:
 
 		strcpy(o->val_string, s);
 		return true;
+
+	case SIMPLE_OPT_STRING_SET:
+		for (i = 0; o->string_set[i] != NULL; i++) {
+			if (!strcmp(s, o->string_set[i])) {
+				o->val_string_set_idx = i;
+				return true;
+			}
+		}
+
+		return false;
 
 	default:
 		return false;
@@ -398,8 +424,15 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 		add_newline = true;
 	}
 
-	if (add_newline)
+	if (add_newline) {
 		fprintf(f, "\n");
+		col = 0;
+
+		if (width > 20) {
+			fprintf(f, "  ");
+			col += 2;
+		}
+	}
 
 	/* print out the message, trying to wrap at words */
 	word_start = 0;
@@ -426,12 +459,20 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 		if (width != 0 && col + (word_end - word_start) + (first_word ? 0 : 1)
 				> width && first_word == false) {
 			fprintf(f, "\n");
-			/* buffer up to line_start with spaces */
 			col = 0;
+
+			/* buffer up to line_start with spaces */
 			while (col < line_start) {
 				fprintf(f, " ");
 				col++;
 			}
+
+			/* newline indentation, for readability */
+			if (width > 20) {
+				fprintf(f, "  ");
+				col += 2;
+			}
+
 			first_word = true;
 		} 
 		
@@ -522,8 +563,17 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 				case SIMPLE_OPT_UNSIGNED:
 					j += 8;
 					break;
+				case SIMPLE_OPT_DOUBLE:
+					j += 6;
+					break;
+				case SIMPLE_OPT_CHAR:
+					j += 4;
+					break;
 				case SIMPLE_OPT_STRING:
 					j += 6;
+					break;
+				case SIMPLE_OPT_STRING_SET:
+					j += 10;
 					break;
 				default:
 					break;
@@ -541,6 +591,11 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		fprintf(f, "simple-opt internal err: usage print buffer too small\n");
 		return;
 	}
+
+	/* if the desc_line_start is so far over it threatens readability, move it
+	 * back a bit and just let the offending longer args be offset */
+	if (desc_line_start > (width / 2 < 30 ? width / 2 : 30))
+		desc_line_start = (width / 2 < 30 ? width / 2 : 30);
 
 
 	/* 
@@ -631,9 +686,21 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 					sprintf(print_buffer + print_buffer_offset, "UNSIGNED");
 					print_buffer_offset += 8;
 					break;
+				case SIMPLE_OPT_DOUBLE:
+					sprintf(print_buffer + print_buffer_offset, "DOUBLE");
+					print_buffer_offset += 6;
+					break;
+				case SIMPLE_OPT_CHAR:
+					sprintf(print_buffer + print_buffer_offset, "CHAR");
+					print_buffer_offset += 4;
+					break;
 				case SIMPLE_OPT_STRING:
 					sprintf(print_buffer + print_buffer_offset, "STRING");
 					print_buffer_offset += 6;
+					break;
+				case SIMPLE_OPT_STRING_SET:
+					sprintf(print_buffer + print_buffer_offset, "STRING-SET");
+					print_buffer_offset += 10;
 					break;
 				default:
 					break;
@@ -649,9 +716,12 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		col = sub_simple_opt_wrap_print(f, width, col, 5, print_buffer);
 
 		/* print option description */
-		if (options[i].description != NULL)
+		if (options[i].description != NULL) {
+			fprintf(f, "  ");
+			col += 2;
 			sub_simple_opt_wrap_print(f, width, col, desc_line_start,
 					options[i].description);
+		}
 
 		/* end of this option */
 		fprintf(f, "\n");
