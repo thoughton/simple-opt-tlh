@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 		simple_opt_print_usage(stdout, 80, argv[0],
 				"[OPTION]... [--] [NON-OPTION]...",
 				"This is where you would put an overview description of the "
-				"program and it's general functionality.", options);
+				"program and its general functionality.", options);
 		return 0;
 	}
 
