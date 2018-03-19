@@ -220,5 +220,6 @@ defined above.
 language delimits words with spaces (i.e. "when i was a child..." vs.
 "子供時代に..."), that the font used is fixed-width, and that every character
 occupies one column (that is, there are no ｗｉｄｅ characters, combining
-diacritics, etc). if these assumptions do not apply to your use case, you
-should use an alternative method for usage printing.
+diacritics, etc) and one byte (no multi-byte utf-8 characters). if these
+assumptions do not apply to your use case, you should use an alternative method
+for usage printing.
