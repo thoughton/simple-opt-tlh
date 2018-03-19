@@ -549,14 +549,14 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 	 */
 
 	/* print "Usage: <exec> <options> */
-	if (usage_name != NULL) {
+	if (usage_name != NULL && usage_options != NULL) {
 		fprintf(f, "Usage:");
 
 		col = sub_simple_opt_wrap_print(f, width, 6, 7, usage_name);
 
 		if (usage_options != NULL)
-			sub_simple_opt_wrap_print(f, width, col, 7 + strlen(usage_name) + 1,
-					usage_options);
+			sub_simple_opt_wrap_print(f, width, col,
+					7 + strlen(usage_name) + 1, usage_options);
 
 		fprintf(f, "\n\n");
 	}
