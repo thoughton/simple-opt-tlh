@@ -22,20 +22,27 @@ you can compile and test with yourself.
 
 int main(int argc, char **argv)
 {
+	const char *set[] = { "str_a", "str_b", NULL };
+
 	/* array containing all options and their types / attributes */
 	struct simple_opt options[] = {
 		{ SIMPLE_OPT_FLAG, 'h', "help", false,
 			"print this help message and exit" },
+		{ SIMPLE_OPT_BOOL, 'b', "bool", false,
+			"(optionally) takes a boolean arg!" },
 		{ SIMPLE_OPT_INT, '\0', "int", true,
-			"this thing needs an integer!" },
+			"requires an integer. has no short_name!" },
 		{ SIMPLE_OPT_UNSIGNED, 'u', "uns", true,
 			"this one has a custom_arg_string. normally it would say" 
 				" \"UNSIGNED\" rather than \"NON-NEG-INT\"",
 			"NON-NEG-INT" },
+		{ SIMPLE_OPT_DOUBLE, 'd', "double", true,
+			"a floating point number" },
 		{ SIMPLE_OPT_STRING, 's', NULL, true,
-			"this one doesn't have a long opt version" },
-		{ SIMPLE_OPT_BOOL, 'b', "bool", false,
-			"(optionally) takes a boolean arg!" },
+			"this one doesn't have a long_name version" },
+		{ SIMPLE_OPT_STRING_SET, '\0', "set-choice", true,
+			"a choice of one string from a NULL-terminated array",
+			"(str_a|str_b)", set },
 		{ SIMPLE_OPT_END },
 	};
 
@@ -102,22 +109,35 @@ int main(int argc, char **argv)
 
 		if (options[i].arg_is_stored) {
 			switch (options[i].type) {
+			case SIMPLE_OPT_BOOL:
+				printf(", val: %s", options[i].val_bool ? "true" : "false");
+				break;
+				
 			case SIMPLE_OPT_INT:
-				printf(", val: %d", options[i].val_int);
+				printf(", val: %ld", options[i].val_int);
 				break;
 
 			case SIMPLE_OPT_UNSIGNED:
-				printf(", val: %u", options[i].val_unsigned);
+				printf(", val: %lu", options[i].val_unsigned);
+				break;
+
+			case SIMPLE_OPT_DOUBLE:
+				printf(", val: %lf", options[i].val_double);
+				break;
+
+			case SIMPLE_OPT_CHAR:
+				printf(", val: %c", options[i].val_char);
 				break;
 
 			case SIMPLE_OPT_STRING:
 				printf(", val: %s", options[i].val_string);
 				break;
 
-			case SIMPLE_OPT_BOOL:
-				printf(", val: %s", options[i].val_bool ? "true" : "false");
+			case SIMPLE_OPT_STRING_SET:
+				printf(", val: %s",
+						options[i].string_set[options[i].val_string_set_idx]);
 				break;
-				
+
 			default:
 				break;
 			}
@@ -179,20 +199,41 @@ $ ./a.out --help
 Usage: ./a.out [OPTION]... [--] [NON-OPTION]...
 
   This is where you would put an overview description of the program and its
-  general functionality.
+    general functionality.
 
-  -h --help            print this help message and exit
-     --int=INT         this thing needs an integer!
-  -u --uns=NON-NEG-INT this one has a custom_arg_string. normally it would say
-                       "UNSIGNED" rather than "NON-NEG-INT"
-  -s STRING            this one doesn't have a long opt version
-  -b --bool[=BOOL]     (optionally) takes a boolean arg!
+  -h --help                   print this help message and exit
+  -b --bool[=BOOL]            (optionally) takes a boolean arg!
+     --int=INT                requires an integer. has no short_name!
+  -u --uns=NON-NEG-INT        this one has a custom_arg_string. normally it
+                                would say "UNSIGNED" rather than "NON-NEG-INT"
+  -d --double=DOUBLE          a floating point number
+  -s STRING                   this one doesn't have a long_name version
+     --set-choice=(str_a|str_b)  a choice of one string from a NULL-terminated
+                                array
 ```
 
 note that the output is word-wrapped. it wraps to a maximum of 80 columns
 because 80 is passed as the second argument to `simple_opt_print_usage`
 (allowing printing to adapt to the user's terminal width if you want to add
-support for that, via ncurses or something).
+support for that, via ncurses or something). also note that the indentation of
+the option descriptions is dependent on the width of the `long_name` column. if
+the lengthy `set-choice` line was removed, for example, the output would
+become:
+
+```
+Usage: ./a.out [OPTION]... [--] [NON-OPTION]...
+
+  This is where you would put an overview description of the program and its
+    general functionality.
+
+  -h --help             print this help message and exit
+  -b --bool[=BOOL]      (optionally) takes a boolean arg!
+     --int=INT          requires an integer. has no short_name!
+  -u --uns=NON-NEG-INT  this one has a custom_arg_string. normally it would say
+                          "UNSIGNED" rather than "NON-NEG-INT"
+  -d --double=DOUBLE    a floating point number
+  -s STRING             this one doesn't have a long_name version
+```
 
 finally, if parsing was successful and usage not printed, this program prints a
 quick summary of which options it accepts, which it saw, and what arguments
@@ -202,51 +243,60 @@ command itself:
 ```
 $ ./a.out 
 --help, seen: no
+--bool, seen: no
 --int, seen: no
 --uns, seen: no
+--double, seen: no
 -s, seen: no
---bool, seen: no
+--set-choice, seen: no
 ```
 
 ```
-$ ./a.out --int=-1 -s test_string -b -- trailing args passed
+$ ./a.out --int=-1 -s test_string -b -- trailing --args -passed
 --help, seen: no
+--bool, seen: yes
 --int, seen: yes, val: -1
 --uns, seen: no
+--double, seen: no
 -s, seen: yes, val: test_string
---bool, seen: yes
+--set-choice, seen: no
 
-non-options: trailing args passed
+non-options: trailing --args -passed
 ```
 
 ```
-$ ./a.out --bool=false -u 3
+$ ./a.out --bool=false -u 3 --set-choice "str_b"
 --help, seen: no
+--bool, seen: yes, val: false
 --int, seen: no
 --uns, seen: yes, val: 3
+--double, seen: no
 -s, seen: no
---bool, seen: yes, val: false
+--set-choice, seen: yes, val: str_b
 ```
 
 ```
 $ ./a.out no options, just arguments
 --help, seen: no
+--bool, seen: no
 --int, seen: no
 --uns, seen: no
+--double, seen: no
 -s, seen: no
---bool, seen: no
+--set-choice, seen: no
 
 non-options: no options, just arguments
 ```
 
 ```
-$ ./a.out non-options --int=+1 can -b on be --uns 0 interleaved
+$ ./a.out non-options --int=+1 can -d 3.9 be --uns 0 interleaved
 --help, seen: no
+--bool, seen: no
 --int, seen: yes, val: 1
 --uns, seen: yes, val: 0
+--double, seen: yes, val: 3.900000
 -s, seen: no
---bool, seen: yes, val: true
+--set-choice, seen: no
 
 non-options: non-options can be interleaved
 ```
-

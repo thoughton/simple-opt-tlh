@@ -23,8 +23,6 @@ int main(int argc, char **argv)
 		{ SIMPLE_OPT_STRING_SET, '\0', "set-choice", true,
 			"a choice of one string from a NULL-terminated array",
 			"(str_a|str_b)", set },
-		{ SIMPLE_OPT_CHAR, 'c', "char", false,
-			"(optionally) takes a character argument" },
 		{ SIMPLE_OPT_END },
 	};
 
@@ -116,7 +114,8 @@ int main(int argc, char **argv)
 				break;
 
 			case SIMPLE_OPT_STRING_SET:
-				printf(", val: %s", set[options[i].val_string_set_idx]);
+				printf(", val: %s",
+						options[i].string_set[options[i].val_string_set_idx]);
 				break;
 
 			default:

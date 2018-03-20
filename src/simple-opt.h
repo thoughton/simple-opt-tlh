@@ -53,8 +53,8 @@ struct simple_opt {
 	/* optional, a custom string describing the arg, used for usage printing */
 	const char *custom_arg_string;
 
-	/* for type SIMPLE_OPT_STRING_SET, a NULL-terminated array of string
-	 * possibilities against which an option's argument is matched */
+	/* required for type SIMPLE_OPT_STRING_SET, a NULL-terminated array of
+	 * string possibilities against which an option's argument is matched */
 	const char **string_set;
 
 	/* values assigned upon successful option parse */
@@ -261,7 +261,9 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 	for (i = 0; options[i].type != SIMPLE_OPT_END; i++) {
 		if ( (options[i].short_name == '\0' && options[i].long_name == NULL) 
 				|| (options[i].type == SIMPLE_OPT_FLAG &&
-					options[i].arg_is_required) ) {
+					options[i].arg_is_required) 
+				|| (options[i].type == SIMPLE_OPT_STRING_SET &&
+					options[i].string_set == NULL) ) {
 			r.result_type = SIMPLE_OPT_RESULT_MALFORMED_OPTION_STRUCT;
 			goto end;
 		}
@@ -568,13 +570,13 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 			}
 		}
 
-		/* 5 for leading "  -X ", 1 for trailing " " */
-		if (desc_line_start < j + 5 + 1)
-			desc_line_start = j + 5 + 1;
+		/* 5 for leading "  -X ", 2 for trailing " " */
+		if (desc_line_start < j + 5 + 2)
+			desc_line_start = j + 5 + 2;
 	}
 
 	/* check for space for long_name printing */
-	if (desc_line_start - 5 - 1 >= SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH) {
+	if (desc_line_start - 5 - 2 >= SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH) {
 		fprintf(f, "simple-opt internal err: usage print buffer too small\n");
 		return;
 	}
