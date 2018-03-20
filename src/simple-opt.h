@@ -411,7 +411,7 @@ opt_copy_and_return:
 static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 		int line_start, const char *s)
 {
-	bool add_newline = false, first_word = true;
+	bool add_newline = false, first_word = true, first_line = true;;
 	int i, j, word_start, word_end;
 
 	if (width != 0 && line_start >= width) {
@@ -419,25 +419,19 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 		add_newline = true;
 	}
 
-	if (width != 0 && col >= width) {
-		col = line_start;
+	if (width != 0 && col >= width)
 		add_newline = true;
-	}
 
 	if (add_newline) {
 		fprintf(f, "\n");
 		col = 0;
-
-		if (width > 20) {
-			fprintf(f, "  ");
-			col += 2;
-		}
+		first_line = false;
 	}
 
 	/* print out the message, trying to wrap at words */
 	word_start = 0;
 	while (1) {
-		/* get the next word */
+		/* find the next word */
 		while ( isspace(s[word_start]) )
 			word_start++;
 
@@ -450,7 +444,7 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 			word_end++;
 
 		/* buffer up to line_start with spaces */
-		while (col < line_start) {
+		while (col < line_start + 2 * !first_line * (width > 40)) {
 			fprintf(f, " ");
 			col++;
 		}
@@ -459,20 +453,13 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 		if (width != 0 && col + (word_end - word_start) + (first_word ? 0 : 1)
 				> width && first_word == false) {
 			fprintf(f, "\n");
-			col = 0;
-
+			first_line = false;
 			/* buffer up to line_start with spaces */
-			while (col < line_start) {
+			col = 0;
+			while (col < line_start + 2 * !first_line * (width > 40)) {
 				fprintf(f, " ");
 				col++;
 			}
-
-			/* newline indentation, for readability */
-			if (width > 20) {
-				fprintf(f, "  ");
-				col += 2;
-			}
-
 			first_word = true;
 		} 
 		
@@ -481,11 +468,12 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 			col++;
 		}
 
-		/* if too long for whole line, print piecemeal */
-		if (width != 0 && line_start + (word_end - word_start) > width) {
+		/* if too long, print piecemeal */
+		if (width != 0 && (line_start + (word_end - word_start) > width
+					|| (first_word && col + (word_end - word_start) > width)) ) {
 			j = word_start;
 			while (1) {
-				for (i = 0; line_start + i < width && j < word_end; i++, j++) {
+				for (i = 0; col < width && j < word_end; i++, j++) {
 					fprintf(f, "%c", s[j]);
 					col++;
 				}
@@ -495,7 +483,8 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
 
 				col = 0;
 				fprintf(f, "\n");
-				while (col < line_start) {
+				first_line = false;
+				while (col < line_start + 2 * !first_line * (width > 40)) {
 					fprintf(f, " ");
 					col++;
 				}
@@ -570,10 +559,8 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 					j += 4;
 					break;
 				case SIMPLE_OPT_STRING:
-					j += 6;
-					break;
 				case SIMPLE_OPT_STRING_SET:
-					j += 10;
+					j += 6;
 					break;
 				default:
 					break;
@@ -598,6 +585,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		desc_line_start = (width / 2 < 30 ? width / 2 : 30);
 
 
+
 	/* 
 	 * printing 
 	 *
@@ -605,9 +593,9 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 
 	/* print "Usage: <exec> <options> */
 	if (usage_name != NULL && usage_options != NULL) {
-		fprintf(f, "Usage:");
+		col = sub_simple_opt_wrap_print(f, width, 0, 0, "Usage:");
 
-		col = sub_simple_opt_wrap_print(f, width, 6, 7, usage_name);
+		col = sub_simple_opt_wrap_print(f, width, col, 7, usage_name);
 
 		if (usage_options != NULL)
 			sub_simple_opt_wrap_print(f, width, col,
@@ -695,12 +683,9 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 					print_buffer_offset += 4;
 					break;
 				case SIMPLE_OPT_STRING:
+				case SIMPLE_OPT_STRING_SET:
 					sprintf(print_buffer + print_buffer_offset, "STRING");
 					print_buffer_offset += 6;
-					break;
-				case SIMPLE_OPT_STRING_SET:
-					sprintf(print_buffer + print_buffer_offset, "STRING-SET");
-					print_buffer_offset += 10;
 					break;
 				default:
 					break;
@@ -717,8 +702,14 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 
 		/* print option description */
 		if (options[i].description != NULL) {
-			fprintf(f, "  ");
-			col += 2;
+			if (col < width) {
+				fprintf(f, " ");;
+				col++;
+			}
+			if (col < width) {
+				fprintf(f, " ");;
+				col++;
+			}
 			sub_simple_opt_wrap_print(f, width, col, desc_line_start,
 					options[i].description);
 		}

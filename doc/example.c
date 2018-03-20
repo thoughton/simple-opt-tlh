@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv)
 {
-	const char *set[] = { "choice_a", "choice_b", NULL };
+	const char *set[] = { "str_a", "str_b", NULL };
 
 	/* array containing all options and their types / attributes */
 	struct simple_opt options[] = {
@@ -21,11 +21,8 @@ int main(int argc, char **argv)
 		{ SIMPLE_OPT_STRING, 's', NULL, true,
 			"this one doesn't have a long_name version" },
 		{ SIMPLE_OPT_STRING_SET, '\0', "set-choice", true,
-			"a choice of one string from a NULL-terminated array."
-				" note that, in order to maintain redability, the description"
-				" indentation does not accomodate the full width of an"
-				" overly-wide custom_arg_string like (choice_a|choice_b)",
-			"(choice_a|choice_b)", set },
+			"a choice of one string from a NULL-terminated array",
+			"(str_a|str_b)", set },
 		{ SIMPLE_OPT_CHAR, 'c', "char", false,
 			"(optionally) takes a character argument" },
 		{ SIMPLE_OPT_END },
