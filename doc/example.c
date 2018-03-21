@@ -1,4 +1,4 @@
-#include "../src/simple-opt.h"
+#include "../simple-opt.h"
 
 int main(int argc, char **argv)
 {

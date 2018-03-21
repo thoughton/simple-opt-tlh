@@ -1,7 +1,7 @@
 simple-opt
 ==========
 
-[simple-opt.h](src/simple-opt.h) is a single header file which implements a
+[simple-opt.h](simple-opt.h) is a single header file which implements a
 simple, flexible, and portable version of command line option parsing for
 programs written in C. it is designed to be (hopefully) intuitive while also
 being (hopefully) more powerful than traditional getopt or similar. it has no
@@ -18,7 +18,7 @@ the following example file is available as [example.c](doc/example.c), which
 you can compile and test with yourself.
 
 ```C
-#include "../src/simple-opt.h"
+#include "../simple-opt.h"
 
 int main(int argc, char **argv)
 {
