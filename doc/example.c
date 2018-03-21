@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 
 	/* if any non-option arguments were passed, print them */
 	if (result.argc > 0) {
-		printf("\nnon-options:", result.argc);
+		printf("\nnon-options:");
 
 		for (i = 0; i < result.argc; i++)
 			printf(" %s", result.argv[i]);

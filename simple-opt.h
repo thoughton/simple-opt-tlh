@@ -660,7 +660,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		if (options[i].type != SIMPLE_OPT_FLAG) {
 			if (options[i].custom_arg_string != NULL) {
 				sprintf(print_buffer + print_buffer_offset,
-						options[i].custom_arg_string);
+						"%s", options[i].custom_arg_string);
 				print_buffer_offset += strlen(options[i].custom_arg_string);
 			} else {
 				switch (options[i].type) {
