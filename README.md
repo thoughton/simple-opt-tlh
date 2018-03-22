@@ -5,7 +5,7 @@ simple-opt
 simple, flexible, and portable version of command line option parsing for
 programs written in C. it is designed to be (hopefully) intuitive while also
 being (hopefully) more powerful than traditional getopt or similar. it has no
-dependencies outside the standard library and is C99 compatible.
+dependencies outside the standard library.
 
 what follows is a simple example usage. refer to
 [interface.md](doc/interface.md) for more detail.

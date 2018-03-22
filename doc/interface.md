@@ -53,9 +53,12 @@ the fields which are set by `simple_opt_parse` are:
 
 	union {
 		bool val_bool;
-		int val_int;
-		unsigned val_unsigned;
-		char val_string[SIMPLE_OPT_ARG_MAX_WIDTH];
+		long val_int;
+		unsigned long val_unsigned;
+		double val_double;
+		char val_char;
+		char val_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
+		int val_string_set_idx;
 	};
 ```
 

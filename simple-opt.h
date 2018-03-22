@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -105,7 +106,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 
 static bool sub_simple_opt_parse(struct simple_opt *o, char *s)
 {
-	int i, j;
+	unsigned i, j;
 	char *str, *cp;
 	bool match;
 
@@ -410,11 +411,11 @@ opt_copy_and_return:
 	goto end;
 }
 
-static int sub_simple_opt_wrap_print(FILE *f, unsigned width, int col,
-		int line_start, const char *s)
+static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
+		unsigned line_start, const char *s)
 {
 	bool add_newline = false, first_word = true, first_line = true;;
-	int i, j, word_start, word_end;
+	unsigned i, j, word_start, word_end;
 
 	if (width != 0 && line_start >= width) {
 		line_start = 0;
@@ -510,7 +511,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		char *usage_options, char *usage_summary, struct simple_opt *options)
 {
 	char print_buffer[SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH];
-	int i, j, col, print_buffer_offset, desc_line_start;
+	unsigned i, j, col, print_buffer_offset, desc_line_start;
 
 	/* calculate the required line_start for printing descriptions (leaving
 	 * space for the widest existing long-option) */
