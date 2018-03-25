@@ -96,8 +96,8 @@ struct simple_opt_result {
 static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 		struct simple_opt *options);
 
-static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
-		char *command_options, char *command_summary,
+static void simple_opt_print_usage(FILE *f, unsigned width,
+		char *command_name, char *command_options, char *command_summary,
 		struct simple_opt *options);
 
 static void simple_opt_print_error(FILE *f, char *command_name,
@@ -525,8 +525,8 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
 	return col;
 }
 
-static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
-		char *command_options, char *command_summary,
+static void simple_opt_print_usage(FILE *f, unsigned width,
+		char *command_name, char *command_options, char *command_summary,
 		struct simple_opt *options)
 {
 	char print_buffer[SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH];
@@ -746,6 +746,9 @@ static void simple_opt_print_error(FILE *f, char *command_name,
 {
 	char *s;
 	unsigned i;
+
+	if (result.result_type == SIMPLE_OPT_RESULT_SUCCESS)
+		return;
 
 	if (command_name != NULL)
 		fprintf(f, "%s: ", command_name);

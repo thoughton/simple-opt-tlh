@@ -166,10 +166,11 @@ contain the unrecognised option which was passed.
 
 if the type is `SIMPLE_OPT_BAD_ARG`, then `option_string` will be set,
 `option_type` will be set to the type of that option (`SIMPLE_OPT_BOOL` etc),
+`option` will be made to point to the option within the provided option array,
 and the bad argument will be stored in `argument_string`.
 
-if the type is `SIMPLE_OPT_MISSING_ARG`, `option_string` and `option_type` will
-be set.
+if the type is `SIMPLE_OPT_MISSING_ARG`, `option_string`, `option`, and
+`option_type` will be set.
 
 the remaining result types are internal errors:
 
@@ -230,22 +231,23 @@ about that parsing (also described above).
 usage message, similar to those typical of GNU cli commands:
 
 ```
-static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
-		char *usage_options, char *usage_summary, struct simple_opt *options);
+static void simple_opt_print_usage(FILE *f, unsigned width,
+		char *command_name, char *command_options, char *command_summary,
+		struct simple_opt *options);
 ```
 
-`f` is a file pointer to which the message should be printed
+`f` is a file pointer to which the message should be printed.
 
 `width` is the column width to which the output should be word-wrapped (passing
 0 disables wrapping). a reasonable value here would be 80, but this could also
 be used to allow more dynamic behaviour (e.g. using something like `ncurses` or
-`ioctl` to get the users's current terminal width)
+`ioctl` to get the users's current terminal width).
 
-`usage_name` is the name of the command as it will be printed in the usage
+`command_name` is the name of the command as it will be printed in the usage
 statement. easiest is just to pass `argv[0]` here.
 
-`usage_options` is a summary of what options the command takes (e.g. something
-like `[OPTION]...`)
+`command_options` is a summary of what options the command takes (e.g.
+something like `[OPTION]...`)
 
 together, these two result in something that looks like:
 
@@ -253,12 +255,12 @@ together, these two result in something that looks like:
 Usage: ./a.out [OPTION]...
 ```
 
-if both `usage_name` and `usage_options` are `NULL`, this initial line will not
-be printed, allowing more flexibility to the programmer (if you wanted to, for
-example, print multiple such lines on your own in order to represent different
-use-cases)
+if both `command_name` and `command_options` are `NULL`, this initial line will
+not be printed, allowing more flexibility to the programmer (if you wanted to,
+for example, print multiple such lines on your own in order to represent
+different use-cases)
 
-`usage_summary` is usually a one or two sentence overview summary of how the
+`command_summary` is usually a one or two sentence overview summary of how the
 command behaves. if this is left as `NULL`, no summary will be printed.
 
 the final argument, `struct simple_opt *options`, is an array of options as
@@ -271,3 +273,25 @@ occupies one column (that is, there are no ｗｉｄｅ characters, combining
 diacritics, etc), and that all characters are one byte (no multi-byte utf-8
 characters). if these assumptions do not apply to your use case, you should use
 an alternative method for usage printing.
+
+
+### simple_opt_print_error
+
+`simple_opt_print_error` takes three arguments and prints a default error
+message, if there is one to be printed:
+
+```
+static void simple_opt_print_error(FILE *f, char *command_name,
+		struct simple_opt_result result);
+```
+
+`f` is a file pointer to which the message should be printed.
+
+`command_name` is the name of the command as it will be printed in the usage
+statement. easiest is just to pass `argv[0]` here. if NULL is passed, "err:"
+will be printed instead.
+
+`result` is a populated result from a call to `simple_opt_parse`.
+
+if the result's type field contains `SIMPLE_OPT_RESULT_SUCCESS`, nothing will
+be printed. otherwise, the output is a summary of the error.

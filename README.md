@@ -55,38 +55,11 @@ int main(int argc, char **argv)
 
 	result = simple_opt_parse(argc, argv, options);
 
-	/* handle errors */
-	switch (result.result_type) {
-	case SIMPLE_OPT_RESULT_UNRECOGNISED_OPTION:
-		fprintf(stderr, "err: unrecognised option `%s`\n",
-				result.option_string);
+	/* catch any errors and print a default error message. you can do this bit
+	 * yourself, if you'd like more control of the output */
+	if (result.result_type != SIMPLE_OPT_RESULT_SUCCESS) {
+		simple_opt_print_error(stderr, argv[0], result);
 		return 1;
-
-	case SIMPLE_OPT_RESULT_BAD_ARG:
-		fprintf(stderr, "err: bad argument `%s` passed to option `%s`\n",
-				result.argument_string, result.option_string);
-		return 1;
-
-	case SIMPLE_OPT_RESULT_MISSING_ARG:
-		fprintf(stderr, "err: argument expected for option `%s`\n",
-				result.option_string);
-		return 1;
-
-	case SIMPLE_OPT_RESULT_OPT_ARG_TOO_LONG:
-		fprintf(stderr, "internal err: argument passed to option `%s` is too long\n",
-				result.option_string);
-		return 1;
-
-	case SIMPLE_OPT_RESULT_TOO_MANY_ARGS:
-		fprintf(stderr, "internal err: too many cli arguments passed\n");
-		return 1;
-
-	case SIMPLE_OPT_RESULT_MALFORMED_OPTION_STRUCT:
-		fprintf(stderr, "internal err: malformed option struct\n");
-		return 1;
-
-	default:
-		break;
 	}
 
 	/* if the help flag was passed, print usage */
@@ -176,17 +149,18 @@ occurs.
 
 ```
 $ ./a.out -y
-err: unrecognised option `-y`
+./a.out: unrecognised option `-y`
 ```
 
 ```
 $ ./a.out --int
-err: argument expected for option `--int`
+./a.out: argument expected for option `--int`
 ```
 
 ```
 $ ./a.out --bool fake
-err: bad argument `fake` passed to option `--bool`
+./a.out: bad argument `fake` passed to option `--bool`
+expected boolean, (yes|true|on) or (no|false|off)
 ```
 
 if one of the options passed is the help flag (`-h` or `--help`), this example
@@ -199,7 +173,7 @@ $ ./a.out --help
 Usage: ./a.out [OPTION]... [--] [NON-OPTION]...
 
   This is where you would put an overview description of the program and its
-    general functionality.
+  general functionality.
 
   -h --help                   print this help message and exit
   -b --bool[=BOOL]            (optionally) takes a boolean arg!
@@ -224,7 +198,7 @@ become:
 Usage: ./a.out [OPTION]... [--] [NON-OPTION]...
 
   This is where you would put an overview description of the program and its
-    general functionality.
+  general functionality.
 
   -h --help             print this help message and exit
   -b --bool[=BOOL]      (optionally) takes a boolean arg!
@@ -300,3 +274,10 @@ $ ./a.out non-options --int=+1 can -d 3.9 be --uns 0 interleaved
 
 non-options: non-options can be interleaved
 ```
+
+changelog
+---------
+
+v1.2: add optional error printing function
+
+v1.0: initial release
