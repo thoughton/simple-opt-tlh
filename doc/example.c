@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	/* catch any errors and print a default error message. you can do this bit
 	 * yourself, if you'd like more control of the output */
 	if (result.result_type != SIMPLE_OPT_RESULT_SUCCESS) {
-		simple_opt_print_error(stderr, argv[0], result);
+		simple_opt_print_error(stderr, 80, argv[0], result);
 		return 1;
 	}
 

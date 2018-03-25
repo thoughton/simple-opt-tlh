@@ -26,8 +26,8 @@
 
 /* an internal print buffer width for usage printing. you shouldn't have to
  * worry about this if you're sane */
-#ifndef SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH
-#define SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH 256
+#ifndef SIMPLE_OPT_PRINT_BUFFER_WIDTH
+#define SIMPLE_OPT_PRINT_BUFFER_WIDTH 4096
 #endif
 
 enum simple_opt_type {
@@ -100,7 +100,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width,
 		char *command_name, char *command_options, char *command_summary,
 		struct simple_opt *options);
 
-static void simple_opt_print_error(FILE *f, char *command_name,
+static void simple_opt_print_error(FILE *f, unsigned width, char *command_name,
 		struct simple_opt_result result);
 
 
@@ -529,15 +529,15 @@ static void simple_opt_print_usage(FILE *f, unsigned width,
 		char *command_name, char *command_options, char *command_summary,
 		struct simple_opt *options)
 {
-	char print_buffer[SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH];
+	char print_buffer[SIMPLE_OPT_PRINT_BUFFER_WIDTH];
 	unsigned i, j, col, print_buffer_offset, desc_line_start;
 
 	/* calculate the required line_start for printing descriptions (leaving
 	 * space for the widest existing long-option) */
 
 	/* check for space for column 1 (short_name) */
-	if (5 >= SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH) {
-		fprintf(f, "simple-opt internal err: usage print buffer too small\n");
+	if (5 >= SIMPLE_OPT_PRINT_BUFFER_WIDTH) {
+		fprintf(f, "simple-opt internal err: print buffer too small\n");
 		return;
 	}
 
@@ -596,7 +596,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width,
 	}
 
 	/* check for space for long_name printing */
-	if (desc_line_start - 5 - 2 >= SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH) {
+	if (desc_line_start - 5 - 2 >= SIMPLE_OPT_PRINT_BUFFER_WIDTH) {
 		fprintf(f, "simple-opt internal err: usage print buffer too small\n");
 		return;
 	}
@@ -741,92 +741,143 @@ static void simple_opt_print_usage(FILE *f, unsigned width,
 	}
 }
 
-static void simple_opt_print_error(FILE *f, char *command_name,
+static void simple_opt_print_error(FILE *f, unsigned width, char *command_name,
 		struct simple_opt_result result)
 {
-	char *s;
-	unsigned i;
+	char print_buffer[SIMPLE_OPT_PRINT_BUFFER_WIDTH];
+	unsigned i, line_start, col;
+	int rval;
+
+	/* just easier to write */
+	size_t size = SIMPLE_OPT_PRINT_BUFFER_WIDTH;
 
 	if (result.result_type == SIMPLE_OPT_RESULT_SUCCESS)
 		return;
 
 	if (command_name != NULL)
-		fprintf(f, "%s: ", command_name);
+		rval = snprintf(print_buffer, size, "%s:", command_name);
 	else
-		fprintf(f, "err: ");
+		rval = snprintf(print_buffer, size, "err:");
+
+	if (rval < 0 || (unsigned)rval >= size) {
+		fprintf(f, "simple-opt internal err: print buffer too small\n");
+		return;
+	}
+
+	col = sub_simple_opt_wrap_print(f, width, 0, 0, print_buffer);
+
+	line_start = strlen(print_buffer) + 1;
 
 	switch (result.result_type) {
 	case SIMPLE_OPT_RESULT_UNRECOGNISED_OPTION:
-		fprintf(f, "unrecognised option `%s`\n",
+		rval = snprintf(print_buffer, size, "unrecognised option `%s`",
 				result.option_string);
 		break;
 
 	case SIMPLE_OPT_RESULT_BAD_ARG:
-		fprintf(f, "bad argument `%s` passed to option `%s`\n",
+		rval = snprintf(print_buffer, size,
+				"bad argument `%s` passed to option `%s`",
 				result.argument_string, result.option_string);
+
+		if (rval < 0 || (unsigned)rval >= size) {
+			fprintf(f, "simple-opt internal err: print buffer too small\n");
+			return;
+		}
+
+		sub_simple_opt_wrap_print(f, width, col, line_start,
+				print_buffer);
+		fprintf(f, "\n");
+		col = 0;
+
 		switch (result.option_type) {
 		case SIMPLE_OPT_BOOL:
-			fprintf(f,
-					"expected boolean, (yes|true|on) or (no|false|off)\n");
+			rval = snprintf(print_buffer, size,
+					"expected a boolean: (yes|true|on) or (no|false|off)");
 			break;
 		case SIMPLE_OPT_INT:
-			fprintf(f, "expected integer value\n");
+			rval = snprintf(print_buffer, size,"expected integer value");
 			break;
 		case SIMPLE_OPT_UNSIGNED:
-			fprintf(f, "expected unsigned integer value\n");
+			rval = snprintf(print_buffer, size,
+					"expected unsigned integer value");
 			break;
 		case SIMPLE_OPT_DOUBLE:
-			fprintf(f, "expected floating-point value\n");
+			rval = snprintf(print_buffer, size,
+					"expected floating-point value");
 			break;
 		case SIMPLE_OPT_CHAR:
-			fprintf(f, "expected single character\n");
+			rval = snprintf(print_buffer, size,
+					"expected single character");
 			break;
 		case SIMPLE_OPT_STRING:
-			fprintf(f, "expected a string\n");
+			rval = snprintf(print_buffer, size,
+					"expected a string");
 			break;
 		case SIMPLE_OPT_STRING_SET:
 			for (i = 0; result.option->string_set[i] != NULL; i++);
-			if (i == 1)
-				fprintf(f, "expected \"%s\"\n", result.option->string_set[0]);
-			else if (i == 2)
-				fprintf(f, "expected \"%s\" or \"%s\"\n",
-						result.option->string_set[0], result.option->string_set[1]);
-			else if (i == 3)
-				fprintf(f, "expected \"%s\", \"%s\" or \"%s\"\n",
-						result.option->string_set[0], result.option->string_set[1],
+			if (i == 1) {
+				rval = snprintf(print_buffer, size, "expected \"%s\"",
+						result.option->string_set[0]);
+			} else if (i == 2) {
+				rval = snprintf(print_buffer, size,
+						"expected \"%s\" or \"%s\"",
+						result.option->string_set[0],
+						result.option->string_set[1]);
+			} else if (i == 3) {
+				rval = snprintf(print_buffer, size,
+						"expected \"%s\", \"%s\" or \"%s\"",
+						result.option->string_set[0],
+						result.option->string_set[1],
 						result.option->string_set[2]);
-			else if (i == 4)
-				fprintf(f, "expected \"%s\", \"%s\", \"%s\", or \"%s\"\n",
-						result.option->string_set[0], result.option->string_set[1],
-						result.option->string_set[2], result.option->string_set[3]);
-			else
-				fprintf(f, "expected a string\n");
+			} else if (i == 4) {
+				rval = snprintf(print_buffer, size,
+						"expected \"%s\", \"%s\", \"%s\", or \"%s\"",
+						result.option->string_set[0],
+						result.option->string_set[1],
+						result.option->string_set[2],
+						result.option->string_set[3]);
+			} else {
+				rval = snprintf(print_buffer, size,
+						"expected one of %u possibile strings", i);
+			}
 		default:
 			break;
 		}
 		break;
 
 	case SIMPLE_OPT_RESULT_MISSING_ARG:
-		fprintf(f, "argument expected for option `%s`\n",
+		rval = snprintf(print_buffer, size,
+				"argument expected for option `%s`",
 				result.option_string);
 		break;
 
 	case SIMPLE_OPT_RESULT_OPT_ARG_TOO_LONG:
-		fprintf(f, "argument passed to option `%s` is too long\n",
+		rval = snprintf(print_buffer, size,
+				"argument passed to option `%s` is too long",
 				result.option_string);
 		break;
 
 	case SIMPLE_OPT_RESULT_TOO_MANY_ARGS:
-		fprintf(f, "too many cli arguments received\n");
+		rval = snprintf(print_buffer, size,
+				"too many cli arguments received");
 		break;
 
 	case SIMPLE_OPT_RESULT_MALFORMED_OPTION_STRUCT:
-		fprintf(f, "malformed option struct (internal err)\n");
+		rval = snprintf(print_buffer, size,
+				"malformed option struct (internal err)");
 		break;
 
 	default:
 		break;
 	}
+
+	if (rval < 0 || (unsigned)rval >= size) {
+		fprintf(f, "simple-opt internal err: print buffer too small");
+		return;
+	}
+
+	sub_simple_opt_wrap_print(f, width, col, line_start, print_buffer);
+	fprintf(f, "\n");
 }
 
 #endif

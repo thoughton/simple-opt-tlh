@@ -281,11 +281,14 @@ an alternative method for usage printing.
 message, if there is one to be printed:
 
 ```
-static void simple_opt_print_error(FILE *f, char *command_name,
+static void simple_opt_print_error(FILE *f, unsigned width, char *command_name,
 		struct simple_opt_result result);
 ```
 
 `f` is a file pointer to which the message should be printed.
+
+`width` is the width to which the output should be word-wrapped. if 0, no
+wrapping will be performed. see `width` in `simple_opt_print_usage` above.
 
 `command_name` is the name of the command as it will be printed in the usage
 statement. easiest is just to pass `argv[0]` here. if NULL is passed, "err:"
