@@ -35,9 +35,10 @@ int main(int argc, char **argv)
 
 	result = simple_opt_parse(argc, argv, options);
 
-	/* catch any errors and print a default result */
+	/* catch any errors and print a default error message. you can do this bit
+	 * yourself, if you'd like more control of the output */
 	if (result.result_type != SIMPLE_OPT_RESULT_SUCCESS) {
-		simple_opt_print_error(stderr, argv[0], options, result);
+		simple_opt_print_error(stderr, argv[0], result);
 		return 1;
 	}
 

@@ -88,6 +88,7 @@ struct simple_opt_result {
 	enum simple_opt_type option_type;
 	char option_string[SIMPLE_OPT_OPT_MAX_WIDTH];
 	char argument_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
+	struct simple_opt *option;
 	int argc;
 	char *argv[SIMPLE_OPT_MAX_ARGC];
 };
@@ -100,7 +101,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
 		struct simple_opt *options);
 
 static void simple_opt_print_error(FILE *f, char *command_name,
-		struct simple_opt *options, struct simple_opt_result result);
+		struct simple_opt_result result);
 
 
 /* 
@@ -360,6 +361,7 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 			if (i + 1 >= argc) {
 				r.result_type = SIMPLE_OPT_RESULT_MISSING_ARG;
 				r.option_type = options[opt_i].type;
+				r.option = options + opt_i;
 				goto opt_copy_and_return;
 			}
 			s = argv[i+1];
@@ -367,6 +369,7 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 			if (argv[i][3 + strlen(options[opt_i].long_name)] == '\0') {
 				r.result_type = SIMPLE_OPT_RESULT_MISSING_ARG;
 				r.option_type = options[opt_i].type;
+				r.option = options + opt_i;
 				goto opt_copy_and_return;
 			}
 
@@ -378,6 +381,7 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 				&& strlen(s) + 1 >= SIMPLE_OPT_OPT_ARG_MAX_WIDTH) {
 			r.result_type = SIMPLE_OPT_RESULT_OPT_ARG_TOO_LONG;
 			r.option_type = options[opt_i].type;
+			r.option = options + opt_i;
 			goto opt_copy_and_return;
 		}
 
@@ -391,7 +395,9 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 		} else {
 			r.result_type = SIMPLE_OPT_RESULT_BAD_ARG;
 			r.option_type = options[opt_i].type;
-			strncpy(r.argument_string, s, SIMPLE_OPT_OPT_ARG_MAX_WIDTH);
+			strncpy(r.argument_string, s, SIMPLE_OPT_OPT_ARG_MAX_WIDTH - 1);
+			r.argument_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH - 1] = '\0';
+			r.option = options + opt_i;
 			goto opt_copy_and_return;
 		}
 
@@ -413,6 +419,9 @@ opt_copy_and_return:
 
 	strncpy(r.option_string, argv[i], SIMPLE_OPT_OPT_MAX_WIDTH - 1 < arg_end ?
 			SIMPLE_OPT_OPT_MAX_WIDTH - 1 : arg_end);
+
+	r.option_string[SIMPLE_OPT_OPT_MAX_WIDTH - 1 < arg_end ?
+		SIMPLE_OPT_OPT_MAX_WIDTH -1 : arg_end] = '\0';
 
 	goto end;
 }
@@ -733,7 +742,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
 }
 
 static void simple_opt_print_error(FILE *f, char *command_name,
-		struct simple_opt *options, struct simple_opt_result result)
+		struct simple_opt_result result)
 {
 	char *s;
 	unsigned i;
@@ -773,19 +782,22 @@ static void simple_opt_print_error(FILE *f, char *command_name,
 			fprintf(f, "expected a string\n");
 			break;
 		case SIMPLE_OPT_STRING_SET:
-			for (i = 0; options->string_set[i] != NULL; i++);
+			for (i = 0; result.option->string_set[i] != NULL; i++);
 			if (i == 1)
-				fprintf(f, "expected \"%s\"\n", options->string_set[0]);
+				fprintf(f, "expected \"%s\"\n", result.option->string_set[0]);
 			else if (i == 2)
 				fprintf(f, "expected \"%s\" or \"%s\"\n",
-						options->string_set[0], options->string_set[1]);
+						result.option->string_set[0], result.option->string_set[1]);
 			else if (i == 3)
 				fprintf(f, "expected \"%s\", \"%s\" or \"%s\"\n",
-						options->string_set[0], options->string_set[1],
-						options->string_set[2]);
+						result.option->string_set[0], result.option->string_set[1],
+						result.option->string_set[2]);
+			else if (i == 4)
+				fprintf(f, "expected \"%s\", \"%s\", \"%s\", or \"%s\"\n",
+						result.option->string_set[0], result.option->string_set[1],
+						result.option->string_set[2], result.option->string_set[3]);
 			else
 				fprintf(f, "expected a string\n");
-			break;
 		default:
 			break;
 		}
