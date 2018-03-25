@@ -95,8 +95,12 @@ struct simple_opt_result {
 static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 		struct simple_opt *options);
 
-static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
-		char *usage_options, char *usage_summary, struct simple_opt *options);
+static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
+		char *command_options, char *command_summary,
+		struct simple_opt *options);
+
+static void simple_opt_print_error(FILE *f, char *command_name,
+		struct simple_opt *options);
 
 
 /* 
@@ -447,7 +451,8 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
 			word_end++;
 
 		/* buffer up to line_start with spaces */
-		while (col < line_start + 2 * !first_line * (width > 40)) {
+		while (col < line_start + 2 * (!first_line && width > 40
+					&& line_start > 5)) {
 			fprintf(f, " ");
 			col++;
 		}
@@ -459,7 +464,8 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
 			first_line = false;
 			/* buffer up to line_start with spaces */
 			col = 0;
-			while (col < line_start + 2 * !first_line * (width > 40)) {
+			while (col < line_start + 2 * (!first_line && width > 40
+						&& line_start > 5)) {
 				fprintf(f, " ");
 				col++;
 			}
@@ -487,7 +493,8 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
 				col = 0;
 				fprintf(f, "\n");
 				first_line = false;
-				while (col < line_start + 2 * !first_line * (width > 40)) {
+				while (col < line_start + 2 * (!first_line && width > 40
+							&& line_start > 5)) {
 					fprintf(f, " ");
 					col++;
 				}
@@ -507,8 +514,9 @@ static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
 	return col;
 }
 
-static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
-		char *usage_options, char *usage_summary, struct simple_opt *options)
+static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
+		char *command_options, char *command_summary,
+		struct simple_opt *options)
 {
 	char print_buffer[SIMPLE_OPT_USAGE_PRINT_BUFFER_WIDTH];
 	unsigned i, j, col, print_buffer_offset, desc_line_start;
@@ -595,21 +603,21 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 	 */
 
 	/* print "Usage: <exec> <options> */
-	if (usage_name != NULL && usage_options != NULL) {
+	if (command_name != NULL && command_options != NULL) {
 		col = sub_simple_opt_wrap_print(f, width, 0, 0, "Usage:");
 
-		col = sub_simple_opt_wrap_print(f, width, col, 7, usage_name);
+		col = sub_simple_opt_wrap_print(f, width, col, 7, command_name);
 
-		if (usage_options != NULL)
+		if (command_options != NULL)
 			sub_simple_opt_wrap_print(f, width, col,
-					7 + strlen(usage_name) + 1, usage_options);
+					7 + strlen(command_name) + 1, command_options);
 
 		fprintf(f, "\n\n");
 	}
 
 	/* print summary line */
-	if (usage_summary != NULL) {
-		sub_simple_opt_wrap_print(f, width, 0, 2, usage_summary);
+	if (command_summary != NULL) {
+		sub_simple_opt_wrap_print(f, width, 0, 2, command_summary);
 		fprintf(f, "\n\n");
 	}
 
@@ -720,6 +728,12 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *usage_name,
 		/* end of this option */
 		fprintf(f, "\n");
 	}
+}
+
+static void simple_opt_print_error(FILE *f, char *command_name,
+		struct simple_opt *options)
+{
+
 }
 
 #endif
