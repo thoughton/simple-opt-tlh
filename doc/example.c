@@ -35,38 +35,10 @@ int main(int argc, char **argv)
 
 	result = simple_opt_parse(argc, argv, options);
 
-	/* handle errors */
-	switch (result.result_type) {
-	case SIMPLE_OPT_RESULT_UNRECOGNISED_OPTION:
-		fprintf(stderr, "err: unrecognised option `%s`\n",
-				result.option_string);
+	/* catch any errors and print a default result */
+	if (result.result_type != SIMPLE_OPT_RESULT_SUCCESS) {
+		simple_opt_print_error(stderr, argv[0], options, result);
 		return 1;
-
-	case SIMPLE_OPT_RESULT_BAD_ARG:
-		fprintf(stderr, "err: bad argument `%s` passed to option `%s`\n",
-				result.argument_string, result.option_string);
-		return 1;
-
-	case SIMPLE_OPT_RESULT_MISSING_ARG:
-		fprintf(stderr, "err: argument expected for option `%s`\n",
-				result.option_string);
-		return 1;
-
-	case SIMPLE_OPT_RESULT_OPT_ARG_TOO_LONG:
-		fprintf(stderr, "internal err: argument passed to option `%s` is too long\n",
-				result.option_string);
-		return 1;
-
-	case SIMPLE_OPT_RESULT_TOO_MANY_ARGS:
-		fprintf(stderr, "internal err: too many cli arguments passed\n");
-		return 1;
-
-	case SIMPLE_OPT_RESULT_MALFORMED_OPTION_STRUCT:
-		fprintf(stderr, "internal err: malformed option struct\n");
-		return 1;
-
-	default:
-		break;
 	}
 
 	/* if the help flag was passed, print usage */

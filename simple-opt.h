@@ -100,7 +100,7 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
 		struct simple_opt *options);
 
 static void simple_opt_print_error(FILE *f, char *command_name,
-		struct simple_opt *options);
+		struct simple_opt *options, struct simple_opt_result result);
 
 
 /* 
@@ -377,6 +377,7 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 		if (options[opt_i].type == SIMPLE_OPT_STRING
 				&& strlen(s) + 1 >= SIMPLE_OPT_OPT_ARG_MAX_WIDTH) {
 			r.result_type = SIMPLE_OPT_RESULT_OPT_ARG_TOO_LONG;
+			r.option_type = options[opt_i].type;
 			goto opt_copy_and_return;
 		}
 
@@ -389,6 +390,7 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 				i++;
 		} else {
 			r.result_type = SIMPLE_OPT_RESULT_BAD_ARG;
+			r.option_type = options[opt_i].type;
 			strncpy(r.argument_string, s, SIMPLE_OPT_OPT_ARG_MAX_WIDTH);
 			goto opt_copy_and_return;
 		}
@@ -731,9 +733,85 @@ static void simple_opt_print_usage(FILE *f, unsigned width, char *command_name,
 }
 
 static void simple_opt_print_error(FILE *f, char *command_name,
-		struct simple_opt *options)
+		struct simple_opt *options, struct simple_opt_result result)
 {
+	char *s;
+	unsigned i;
 
+	if (command_name != NULL)
+		fprintf(f, "%s: ", command_name);
+	else
+		fprintf(f, "err: ");
+
+	switch (result.result_type) {
+	case SIMPLE_OPT_RESULT_UNRECOGNISED_OPTION:
+		fprintf(f, "unrecognised option `%s`\n",
+				result.option_string);
+		break;
+
+	case SIMPLE_OPT_RESULT_BAD_ARG:
+		fprintf(f, "bad argument `%s` passed to option `%s`\n",
+				result.argument_string, result.option_string);
+		switch (result.option_type) {
+		case SIMPLE_OPT_BOOL:
+			fprintf(f,
+					"expected boolean, (yes|true|on) or (no|false|off)\n");
+			break;
+		case SIMPLE_OPT_INT:
+			fprintf(f, "expected integer value\n");
+			break;
+		case SIMPLE_OPT_UNSIGNED:
+			fprintf(f, "expected unsigned integer value\n");
+			break;
+		case SIMPLE_OPT_DOUBLE:
+			fprintf(f, "expected floating-point value\n");
+			break;
+		case SIMPLE_OPT_CHAR:
+			fprintf(f, "expected single character\n");
+			break;
+		case SIMPLE_OPT_STRING:
+			fprintf(f, "expected a string\n");
+			break;
+		case SIMPLE_OPT_STRING_SET:
+			for (i = 0; options->string_set[i] != NULL; i++);
+			if (i == 1)
+				fprintf(f, "expected \"%s\"\n", options->string_set[0]);
+			else if (i == 2)
+				fprintf(f, "expected \"%s\" or \"%s\"\n",
+						options->string_set[0], options->string_set[1]);
+			else if (i == 3)
+				fprintf(f, "expected \"%s\", \"%s\" or \"%s\"\n",
+						options->string_set[0], options->string_set[1],
+						options->string_set[2]);
+			else
+				fprintf(f, "expected a string\n");
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case SIMPLE_OPT_RESULT_MISSING_ARG:
+		fprintf(f, "argument expected for option `%s`\n",
+				result.option_string);
+		break;
+
+	case SIMPLE_OPT_RESULT_OPT_ARG_TOO_LONG:
+		fprintf(f, "argument passed to option `%s` is too long\n",
+				result.option_string);
+		break;
+
+	case SIMPLE_OPT_RESULT_TOO_MANY_ARGS:
+		fprintf(f, "too many cli arguments received\n");
+		break;
+
+	case SIMPLE_OPT_RESULT_MALFORMED_OPTION_STRUCT:
+		fprintf(f, "malformed option struct (internal err)\n");
+		break;
+
+	default:
+		break;
+	}
 }
 
 #endif
