@@ -27,7 +27,7 @@
 /* an internal print buffer width for usage printing. you shouldn't have to
  * worry about this if you're sane */
 #ifndef SIMPLE_OPT_PRINT_BUFFER_WIDTH
-#define SIMPLE_OPT_PRINT_BUFFER_WIDTH 4096
+#define SIMPLE_OPT_PRINT_BUFFER_WIDTH 2048
 #endif
 
 enum simple_opt_type {
@@ -749,7 +749,7 @@ static void simple_opt_print_error(FILE *f, unsigned width, char *command_name,
 	int rval;
 
 	/* just easier to write */
-	size_t size = SIMPLE_OPT_PRINT_BUFFER_WIDTH;
+	const size_t size = SIMPLE_OPT_PRINT_BUFFER_WIDTH;
 
 	if (result.result_type == SIMPLE_OPT_RESULT_SUCCESS)
 		return;
