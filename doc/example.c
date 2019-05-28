@@ -63,32 +63,32 @@ int main(int argc, char **argv)
 		if (options[i].arg_is_stored) {
 			switch (options[i].type) {
 			case SIMPLE_OPT_BOOL:
-				printf(", val: %s", options[i].val_bool ? "true" : "false");
+				printf(", val: %s", options[i].val.v_bool ? "true" : "false");
 				break;
 				
 			case SIMPLE_OPT_INT:
-				printf(", val: %ld", options[i].val_int);
+				printf(", val: %ld", options[i].val.v_int);
 				break;
 
 			case SIMPLE_OPT_UNSIGNED:
-				printf(", val: %lu", options[i].val_unsigned);
+				printf(", val: %lu", options[i].val.v_unsigned);
 				break;
 
 			case SIMPLE_OPT_DOUBLE:
-				printf(", val: %lf", options[i].val_double);
+				printf(", val: %lf", options[i].val.v_double);
 				break;
 
 			case SIMPLE_OPT_CHAR:
-				printf(", val: %c", options[i].val_char);
+				printf(", val: %c", options[i].val.v_char);
 				break;
 
 			case SIMPLE_OPT_STRING:
-				printf(", val: %s", options[i].val_string);
+				printf(", val: %s", options[i].val.v_string);
 				break;
 
 			case SIMPLE_OPT_STRING_SET:
 				printf(", val: %s",
-						options[i].string_set[options[i].val_string_set_idx]);
+						options[i].string_set[options[i].val.v_string_set_idx]);
 				break;
 
 			default:

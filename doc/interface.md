@@ -52,21 +52,21 @@ the fields which are set by `simple_opt_parse` are:
 	bool arg_is_stored;
 
 	union {
-		bool val_bool;
-		long val_int;
-		unsigned long val_unsigned;
-		double val_double;
-		char val_char;
-		char val_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
-		int val_string_set_idx;
-	};
+		bool v_bool;
+		long v_int;
+		unsigned long v_unsigned;
+		double v_double;
+		char v_char;
+		char v_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
+		int v_string_set_idx;
+	} val;
 ```
 
 `was_seen` indicates if this option was encountered during parsing,
-`arg_is_stored` if an argument was passed to the option, and the `val_<type>`
+`arg_is_stored` if an argument was passed to the option, and the `val.v_<type>`
 fields contain the value passed (with the correct field to set being determined
 by the `type` field shown above) for all but `SIMPLE_OPT_STRING_SET`, for which
-`val_string_set_idx` is set, an index into the `string_set` field's array,
+`val.v_string_set_idx` is set, an index into the `string_set` field's array,
 indicating which possibility was matched.
 
 options of the following types:

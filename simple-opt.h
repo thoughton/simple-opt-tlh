@@ -63,14 +63,14 @@ struct simple_opt {
 	bool arg_is_stored;
 
 	union {
-		bool val_bool;
-		long val_int;
-		unsigned long val_unsigned;
-		double val_double;
-		char val_char;
-		char val_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
-		int val_string_set_idx;
-	};
+		bool v_bool;
+		long v_int;
+		unsigned long v_unsigned;
+		double v_double;
+		char v_char;
+		char v_string[SIMPLE_OPT_OPT_ARG_MAX_WIDTH];
+		int v_string_set_idx;
+	} val;
 };
 
 enum simple_opt_result_type {
@@ -153,9 +153,9 @@ loop:
 strmatch_out:
 			if (match) {
 				if (i < 3)
-					o->val_bool = true;
+					o->val.v_bool = true;
 				else
-					o->val_bool = false;
+					o->val.v_bool = false;
 
 				return true;
 			}
@@ -166,7 +166,7 @@ strmatch_out:
 
 	case SIMPLE_OPT_INT:
 		errno = 0;
-		o->val_int = strtol(s, &cp, 0);
+		o->val.v_int = strtol(s, &cp, 0);
 
 		if (cp == s || *cp != '\0' || errno)
 			return false;
@@ -178,7 +178,7 @@ strmatch_out:
 			return false;
 
 		errno = 0;
-		o->val_unsigned = strtoul(s, &cp, 0);
+		o->val.v_unsigned = strtoul(s, &cp, 0);
 
 		if (cp == s || *cp != '\0' || errno)
 			return false;
@@ -187,7 +187,7 @@ strmatch_out:
 
 	case SIMPLE_OPT_DOUBLE:
 		errno = 0;
-		o->val_double = strtod(s, &cp);
+		o->val.v_double = strtod(s, &cp);
 
 		if (cp == s || *cp != '\0' || errno)
 			return false;
@@ -198,20 +198,20 @@ strmatch_out:
 		if (strlen(s) != 1)
 			return false;
 
-		o->val_char = s[0];
+		o->val.v_char = s[0];
 		return true;
 
 	case SIMPLE_OPT_STRING:
 		if (strlen(s) + 1 >= SIMPLE_OPT_OPT_ARG_MAX_WIDTH)
 			return false;
 
-		strcpy(o->val_string, s);
+		strcpy(o->val.v_string, s);
 		return true;
 
 	case SIMPLE_OPT_STRING_SET:
 		for (i = 0; o->string_set[i] != NULL; i++) {
 			if (!strcmp(s, o->string_set[i])) {
-				o->val_string_set_idx = i;
+				o->val.v_string_set_idx = i;
 				return true;
 			}
 		}
@@ -284,9 +284,9 @@ static struct simple_opt_result simple_opt_parse(int argc, char **argv,
 						&& options[j].short_name != '\0'
 						&& options[i].short_name == options[j].short_name)
 					|| ( options[i].long_name != NULL
-					     && options[j].long_name != NULL
-						 && !strcmp(options[i].long_name, options[j].long_name))
-					   )
+						&& options[j].long_name != NULL
+						&& !strcmp(options[i].long_name, options[j].long_name))
+					)
 				) {
 				r.result_type = SIMPLE_OPT_RESULT_MALFORMED_OPTION_STRUCT;
 				goto end;
