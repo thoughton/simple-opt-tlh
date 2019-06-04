@@ -429,7 +429,7 @@ opt_copy_and_return:
 static int sub_simple_opt_wrap_print(FILE *f, unsigned width, unsigned col,
 		unsigned line_start, const char *s)
 {
-	bool add_newline = false, first_word = true, first_line = true;;
+	bool add_newline = false, first_word = true, first_line = true;
 	unsigned i, j, word_start, word_end;
 
 	if (width != 0 && line_start >= width) {
@@ -725,11 +725,11 @@ static void simple_opt_print_usage(FILE *f, unsigned width,
 		/* print option description */
 		if (options[i].description != NULL) {
 			if (col < width) {
-				fprintf(f, " ");;
+				fprintf(f, " ");
 				col++;
 			}
 			if (col < width) {
-				fprintf(f, " ");;
+				fprintf(f, " ");
 				col++;
 			}
 			sub_simple_opt_wrap_print(f, width, col, desc_line_start,
