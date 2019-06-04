@@ -278,6 +278,8 @@ non-options: non-options can be interleaved
 changelog
 ---------
 
+v1.4: move vals to a named union (interface-change)
+
 v1.2: add optional error printing function
 
 v1.0: initial release
