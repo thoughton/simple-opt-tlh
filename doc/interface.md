@@ -115,8 +115,9 @@ floating point number that can be read by the standard library `strtod`
 function and stored in a `double` type. this includes arguments like "4.9",
 "-1.2e20", "infinity", or "nan".
 
-arguments acceptable to type `SIMPLE_OPT_CHAR` may be any single-byte
-character.
+arguments acceptable to type `SIMPLE_OPT_CHAR` may be any single-byte character
+or one of the following two-character escape sequences: `\a`, `\b`, `\f`, `\n`,
+`\r`, `\t`, `\v`.
 
 arguments acceptable to type `SIMPLE_OPT_STRING` may be any string of
 characters the user passes.

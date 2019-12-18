@@ -195,8 +195,42 @@ strmatch_out:
 		return true;
 
 	case SIMPLE_OPT_CHAR:
-		if (strlen(s) != 1)
+		if (strlen(s) == 2 && s[0] == '\\') {
+			switch (s[1]) {
+			case '0':
+				o->val.v_char = '\0';
+				break;
+			case 'a':
+				o->val.v_char = '\a';
+				break;
+			case 'b':
+				o->val.v_char = '\b';
+				break;
+			case 't':
+				o->val.v_char = '\t';
+				break;
+			case 'n':
+				o->val.v_char = '\n';
+				break;
+			case 'v':
+				o->val.v_char = '\v';
+				break;
+			case 'f':
+				o->val.v_char = '\f';
+				break;
+			case 'r':
+				o->val.v_char = '\r';
+				break;
+			case '\\':
+				o->val.v_char = '\\';
+				break;
+			default:
+				return false;
+			}
+			return true;
+		} else if (strlen(s) != 1) {
 			return false;
+		}
 
 		o->val.v_char = s[0];
 		return true;
